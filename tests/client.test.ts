@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { KovaMind } from "../src/client";
 import {
   AuthError,
+  KovaMindError,
   RateLimitError,
   NotFoundError,
   ServerError,
@@ -208,12 +209,54 @@ describe("KovaMind", () => {
     });
   });
 
+  describe("context", () => {
+    it("returns emotional context", async () => {
+      vi.stubGlobal(
+        "fetch",
+        mockFetch([
+          {
+            status: 200,
+            body: {
+              conversation_id: "conv-123",
+              emotions: { joy: 0.8, curiosity: 0.6 },
+              dominant_emotion: "joy",
+              sentiment: "positive",
+            },
+          },
+        ])
+      );
+
+      const result = await kova.context({ conversationId: "conv-123" });
+      expect(result.conversationId).toBe("conv-123");
+      expect(result.dominantEmotion).toBe("joy");
+      expect(result.sentiment).toBe("positive");
+      expect(result.emotions.joy).toBe(0.8);
+    });
+  });
+
   describe("server error", () => {
     it("throws ServerError on 500", async () => {
       vi.stubGlobal("fetch", mockFetch([{ status: 500 }]));
       await expect(
         kova.extract({ conversation: [], userId: "alex" })
       ).rejects.toThrow(ServerError);
+    });
+  });
+
+  describe("timeout", () => {
+    it("throws KovaMindError on abort/timeout", async () => {
+      const abortError = new DOMException("The operation was aborted", "AbortError");
+      vi.stubGlobal("fetch", vi.fn(async () => { throw abortError; }));
+      await expect(
+        kova.extract({ conversation: [], userId: "alex" })
+      ).rejects.toThrow(KovaMindError);
+    });
+
+    it("throws KovaMindError on network failure", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("fetch failed"); }));
+      await expect(
+        kova.extract({ conversation: [], userId: "alex" })
+      ).rejects.toThrow(KovaMindError);
     });
   });
 });

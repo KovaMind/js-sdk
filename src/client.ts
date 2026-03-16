@@ -6,6 +6,7 @@ import {
   ServerError,
 } from "./errors";
 import type {
+  EmotionalContext,
   ExtractParams,
   ExtractResult,
   HealthStatus,
@@ -105,6 +106,20 @@ export class KovaMind {
     };
   }
 
+  async context(params: { conversationId: string }): Promise<EmotionalContext> {
+    const data = await this.get(
+      `/memory/context?conversation_id=${encodeURIComponent(params.conversationId)}`
+    );
+    return {
+      conversationId:
+        (data.conversation_id as string) ?? params.conversationId,
+      emotions: (data.emotions as Record<string, number>) ?? {},
+      dominantEmotion: (data.dominant_emotion as string) ?? "",
+      sentiment: (data.sentiment as string) ?? "neutral",
+      raw: data,
+    };
+  }
+
   async health(): Promise<HealthStatus> {
     const data = await this.get("/health");
     return {
@@ -152,7 +167,21 @@ export class KovaMind {
           init.body = JSON.stringify(body);
         }
 
-        const response = await fetch(url, init);
+        let response: Response;
+        try {
+          response = await fetch(url, init);
+        } catch (err: any) {
+          if (err?.name === "AbortError") {
+            throw new KovaMindError(
+              `Request timed out after ${this.timeout}ms`,
+              408
+            );
+          }
+          throw new KovaMindError(
+            `Network error: ${err?.message ?? "Unknown"}`,
+            undefined
+          );
+        }
 
         if (response.status !== 429) {
           return this.handleResponse(response);

@@ -1,0 +1,38 @@
+{
+  "name": "kovamind",
+  "version": "0.1.0",
+  "description": "Node.js/TypeScript SDK for the Kova Mind memory API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["ai", "memory", "agents", "llm", "kovamind"],
+  "author": "Kova Mind <hello@kovamind.ai>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KovaMind/js-sdk.git"
+  },
+  "homepage": "https://kovamind.ai",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -123,7 +123,8 @@ export class KovaMind {
   // -- Vault --
 
   async vaultStatus(): Promise<{ status: string }> {
-    return this.get("/vault/status");
+    const data = await this.get("/vault/status");
+    return { status: (data.status as string) ?? "unknown" };
   }
 
   async vaultStore(params: {
@@ -140,34 +141,48 @@ export class KovaMind {
     if (params.tags !== undefined) {
       body.tags = params.tags;
     }
-    return this.post("/vault/secrets", body) as any;
+    const data = await this.post("/vault/secrets", body);
+    return {
+      id: (data.id as string) ?? "",
+      label: (data.label as string) ?? params.label,
+      hash: (data.hash as string) ?? "",
+    };
   }
 
   async vaultGet(params: {
     agentId: string;
     secretId: string;
   }): Promise<{ id: string; value: string }> {
-    return this.get(
+    const data = await this.get(
       `/vault/secrets/${encodeURIComponent(params.secretId)}?agent_id=${encodeURIComponent(params.agentId)}`
-    ) as any;
+    );
+    return {
+      id: (data.id as string) ?? params.secretId,
+      value: (data.value as string) ?? "",
+    };
   }
 
   async vaultList(params: {
     agentId: string;
   }): Promise<{ secrets: Array<{ id: string; label: string; tags?: string; created_at: string }> }> {
-    return this.get(
+    const data = await this.get(
       `/vault/secrets?agent_id=${encodeURIComponent(params.agentId)}`
-    ) as any;
+    );
+    return { secrets: (data.secrets as any[]) ?? [] };
   }
 
   async vaultDelete(params: {
     agentId: string;
     secretId: string;
   }): Promise<{ status: string; destroyed: boolean }> {
-    return this.requestWithRetry(
+    const data = await this.requestWithRetry(
       "DELETE",
       `/vault/secrets/${encodeURIComponent(params.secretId)}?agent_id=${encodeURIComponent(params.agentId)}`
-    ) as any;
+    );
+    return {
+      status: (data.status as string) ?? "unknown",
+      destroyed: (data.destroyed as boolean) ?? false,
+    };
   }
 
   async health(): Promise<HealthStatus> {

@@ -120,6 +120,56 @@ export class KovaMind {
     };
   }
 
+  // -- Vault --
+
+  async vaultStatus(): Promise<{ status: string }> {
+    return this.get("/vault/status");
+  }
+
+  async vaultStore(params: {
+    agentId: string;
+    label: string;
+    value: string;
+    tags?: string;
+  }): Promise<{ id: string; label: string; hash: string }> {
+    const body: Record<string, unknown> = {
+      agent_id: params.agentId,
+      label: params.label,
+      value: params.value,
+    };
+    if (params.tags !== undefined) {
+      body.tags = params.tags;
+    }
+    return this.post("/vault/secrets", body) as any;
+  }
+
+  async vaultGet(params: {
+    agentId: string;
+    secretId: string;
+  }): Promise<{ id: string; value: string }> {
+    return this.get(
+      `/vault/secrets/${encodeURIComponent(params.secretId)}?agent_id=${encodeURIComponent(params.agentId)}`
+    ) as any;
+  }
+
+  async vaultList(params: {
+    agentId: string;
+  }): Promise<{ secrets: Array<{ id: string; label: string; tags?: string; created_at: string }> }> {
+    return this.get(
+      `/vault/secrets?agent_id=${encodeURIComponent(params.agentId)}`
+    ) as any;
+  }
+
+  async vaultDelete(params: {
+    agentId: string;
+    secretId: string;
+  }): Promise<{ status: string; destroyed: boolean }> {
+    return this.requestWithRetry(
+      "DELETE",
+      `/vault/secrets/${encodeURIComponent(params.secretId)}?agent_id=${encodeURIComponent(params.agentId)}`
+    ) as any;
+  }
+
   async health(): Promise<HealthStatus> {
     const data = await this.get("/health");
     return {

@@ -193,10 +193,12 @@ export class KovaMind {
           : undefined;
 
         if (attempt < MAX_RETRIES - 1) {
-          const sleepMs =
+          const sleepMs = Math.min(
             retryAfter !== undefined && !isNaN(retryAfter)
               ? retryAfter * 1000
-              : delay;
+              : delay,
+            300_000 // cap at 5 minutes
+          );
           await sleep(sleepMs);
           delay *= 2;
         } else {

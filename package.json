@@ -1,6 +1,6 @@
 {
   "name": "kovamind",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node.js/TypeScript SDK for the Kova Mind memory API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

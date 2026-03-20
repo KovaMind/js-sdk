@@ -17,6 +17,14 @@ import type {
   ReinforcementResult,
   SurpriseParams,
   SurpriseResult,
+  VaultSetupResult,
+  VaultStoreParams,
+  VaultStoreResult,
+  VaultCredentialMeta,
+  VaultHandle,
+  VaultExecuteParams,
+  VaultExecuteResult,
+  VaultRecoverParams,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://api.kovamind.ai";
@@ -129,6 +137,59 @@ export class KovaMind {
     };
   }
 
+  async vaultSetup(passphrase: string): Promise<VaultSetupResult> {
+    return this.post("/vault/v2/setup", { passphrase });
+  }
+
+  async vaultUnlock(passphrase: string): Promise<{ status: string }> {
+    return this.post("/vault/v2/unlock", { passphrase });
+  }
+
+  async vaultLock(): Promise<{ status: string }> {
+    return this.post("/vault/v2/lock", {});
+  }
+
+  async vaultStore(params: VaultStoreParams): Promise<VaultStoreResult> {
+    const body: Record<string, unknown> = {
+      label: params.label,
+      schema_type: params.schemaType,
+      fields: params.fields,
+    };
+    if (params.tags !== undefined) body.tags = params.tags;
+    return this.post("/vault/v2/credentials", body);
+  }
+
+  async vaultList(): Promise<VaultCredentialMeta[]> {
+    const data = await this.get("/vault/v2/credentials");
+    return (data.credentials ?? []) as VaultCredentialMeta[];
+  }
+
+  async vaultDelete(credentialId: string): Promise<{ status: string; id: string }> {
+    return this.delete(`/vault/v2/credentials/${encodeURIComponent(credentialId)}`);
+  }
+
+  async vaultHandles(): Promise<VaultHandle[]> {
+    const data = await this.get("/vault/v2/handles");
+    return (data.handles ?? []) as VaultHandle[];
+  }
+
+  async vaultExecute(params: VaultExecuteParams): Promise<VaultExecuteResult> {
+    const body: Record<string, unknown> = {
+      handle: params.handle,
+      action: params.action,
+      target: params.target,
+    };
+    if (params.mapping !== undefined) body.mapping = params.mapping;
+    return this.post("/vault/v2/execute", body);
+  }
+
+  async vaultRecover(params: VaultRecoverParams): Promise<VaultSetupResult> {
+    return this.post("/vault/v2/recover", {
+      words: params.words,
+      new_passphrase: params.newPassphrase,
+    });
+  }
+
   private async post(
     path: string,
     body: Record<string, unknown>
@@ -138,6 +199,10 @@ export class KovaMind {
 
   private async get(path: string): Promise<Record<string, any>> {
     return this.requestWithRetry("GET", path);
+  }
+
+  private async delete(path: string): Promise<Record<string, any>> {
+    return this.requestWithRetry("DELETE", path);
   }
 
   private async requestWithRetry(

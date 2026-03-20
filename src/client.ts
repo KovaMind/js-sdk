@@ -139,15 +139,15 @@ export class KovaMind {
   }
 
   async vaultSetup(passphrase: string): Promise<VaultSetupResult> {
-    return this.post("/vault/v2/setup", { passphrase });
+    return this.post("/vault/v2/setup", { passphrase }) as Promise<VaultSetupResult>;
   }
 
   async vaultUnlock(passphrase: string): Promise<{ status: string }> {
-    return this.post("/vault/v2/unlock", { passphrase });
+    return this.post("/vault/v2/unlock", { passphrase }) as Promise<{ status: string }>;
   }
 
   async vaultLock(): Promise<{ status: string }> {
-    return this.post("/vault/v2/lock", {});
+    return this.post("/vault/v2/lock", {}) as Promise<{ status: string }>;
   }
 
   async vaultStore(params: VaultStoreParams): Promise<VaultStoreResult> {
@@ -157,7 +157,7 @@ export class KovaMind {
       fields: params.fields,
     };
     if (params.tags !== undefined) body.tags = params.tags;
-    return this.post("/vault/v2/credentials", body);
+    return this.post("/vault/v2/credentials", body) as Promise<VaultStoreResult>;
   }
 
   async vaultList(): Promise<VaultCredentialMeta[]> {
@@ -166,7 +166,7 @@ export class KovaMind {
   }
 
   async vaultDelete(credentialId: string): Promise<{ status: string; id: string }> {
-    return this.delete(`/vault/v2/credentials/${encodeURIComponent(credentialId)}`);
+    return this.delete(`/vault/v2/credentials/${encodeURIComponent(credentialId)}`) as Promise<{ status: string; id: string }>;
   }
 
   async vaultHandles(): Promise<VaultHandle[]> {
@@ -187,14 +187,14 @@ export class KovaMind {
     };
     if (params.mapping !== undefined) body.mapping = params.mapping;
     if (params.autoDetect !== undefined) body.auto_detect = params.autoDetect;
-    return this.post("/vault/v2/execute", body);
+    return this.post("/vault/v2/execute", body) as Promise<VaultExecuteResult>;
   }
 
   async vaultRecover(params: VaultRecoverParams): Promise<VaultSetupResult> {
     return this.post("/vault/v2/recover", {
       words: params.words,
       new_passphrase: params.newPassphrase,
-    });
+    }) as Promise<VaultSetupResult>;
   }
 
   private async post(

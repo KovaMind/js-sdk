@@ -81,3 +81,62 @@ export interface HealthStatus {
   version: string;
   raw: Record<string, unknown>;
 }
+
+// Vault v2 types
+export interface VaultFindResult {
+    handle: string;
+    label: string;
+    schema_type: string;
+    score: number;
+}
+
+export interface VaultSetupResult {
+    status: string;
+    recovery_words: string[];
+}
+
+export interface VaultStoreParams {
+    label: string;
+    schemaType: string;
+    fields: Record<string, string>;
+    tags?: string;
+}
+
+export interface VaultStoreResult {
+    handle: string;
+    label: string;
+}
+
+export interface VaultHandle {
+    handle: string;
+    label: string;
+    schema_type: string;
+}
+
+export interface VaultCredentialMeta {
+    id: string;
+    label: string;
+    schema_type: string;
+    tags: string | null;
+    created_at: string;
+}
+
+export interface VaultExecuteParams {
+    handle?: string;
+    action: string;
+    target: string;
+    mapping?: Record<string, string>;
+    autoDetect?: string;
+}
+
+export interface VaultExecuteResult {
+    success: boolean;
+    output: string;
+    error: string | null;
+    status_code: number | null;
+}
+
+export interface VaultRecoverParams {
+    words: string[];
+    newPassphrase: string;
+}

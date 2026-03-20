@@ -21,4 +21,13 @@ export type {
   HealthStatus,
   Message,
   ReinforcementType,
+  VaultSetupResult,
+  VaultStoreParams,
+  VaultStoreResult,
+  VaultCredentialMeta,
+  VaultHandle,
+  VaultFindResult,
+  VaultExecuteParams,
+  VaultExecuteResult,
+  VaultRecoverParams,
 } from "./types";

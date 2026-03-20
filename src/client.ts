@@ -22,6 +22,7 @@ import type {
   VaultStoreResult,
   VaultCredentialMeta,
   VaultHandle,
+  VaultFindResult,
   VaultExecuteParams,
   VaultExecuteResult,
   VaultRecoverParams,
@@ -173,13 +174,19 @@ export class KovaMind {
     return (data.handles ?? []) as VaultHandle[];
   }
 
+  async vaultFind(query: string): Promise<VaultFindResult[]> {
+    const data = await this.get(`/vault/v2/find?q=${encodeURIComponent(query)}`);
+    return (data.results ?? []) as VaultFindResult[];
+  }
+
   async vaultExecute(params: VaultExecuteParams): Promise<VaultExecuteResult> {
     const body: Record<string, unknown> = {
-      handle: params.handle,
+      handle: params.handle ?? "",
       action: params.action,
       target: params.target,
     };
     if (params.mapping !== undefined) body.mapping = params.mapping;
+    if (params.autoDetect !== undefined) body.auto_detect = params.autoDetect;
     return this.post("/vault/v2/execute", body);
   }
 

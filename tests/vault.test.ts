@@ -93,4 +93,11 @@ describe("Vault v2", () => {
         expect(keys).not.toContain("secret");
         expect(keys).not.toContain("value");
     });
+
+    it("vaultFind returns matches", async () => {
+        global.fetch = mockFetch({ results: [{ handle: "h1", label: "GitHub", schema_type: "username_password", score: 0.95 }] });
+        const result = await client.vaultFind("GitHub");
+        expect(result).toHaveLength(1);
+        expect(result[0].label).toBe("GitHub");
+    });
 });

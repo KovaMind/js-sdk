@@ -26,6 +26,7 @@ export type {
   VaultStoreResult,
   VaultCredentialMeta,
   VaultHandle,
+  VaultFindResult,
   VaultExecuteParams,
   VaultExecuteResult,
   VaultRecoverParams,

@@ -83,6 +83,13 @@ export interface HealthStatus {
 }
 
 // Vault v2 types
+export interface VaultFindResult {
+    handle: string;
+    label: string;
+    schema_type: string;
+    score: number;
+}
+
 export interface VaultSetupResult {
     status: string;
     recovery_words: string[];
@@ -115,10 +122,11 @@ export interface VaultCredentialMeta {
 }
 
 export interface VaultExecuteParams {
-    handle: string;
+    handle?: string;
     action: string;
     target: string;
     mapping?: Record<string, string>;
+    autoDetect?: string;
 }
 
 export interface VaultExecuteResult {

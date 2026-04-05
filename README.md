@@ -51,7 +51,7 @@ console.log(novelty.score, novelty.route); // 0.82, "contradict"
 | Option | Default | Description |
 |--------|---------|-------------|
 | `apiKey` | required | Your `km_live_...` key |
-| `baseUrl` | `https://api.kovamind.ai` | API base URL |
+| `baseUrl` | `https://api.kovamind.io` | API base URL |
 | `timeout` | `30000` | Request timeout (ms) |
 
 ### `extract(params)` — Extract memory patterns

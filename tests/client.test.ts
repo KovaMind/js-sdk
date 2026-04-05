@@ -8,7 +8,7 @@ import {
   ServerError,
 } from "../src/errors";
 
-const BASE_URL = "https://api.kovamind.ai";
+const BASE_URL = "https://api.kovamind.io";
 const API_KEY = "km_live_testhex01";
 
 let fetchCalls: Array<{ url: string; init?: RequestInit }> = [];
@@ -406,11 +406,11 @@ describe("KovaMind", () => {
       expect(fetchCalls[0].url).toBe("https://example.com/health");
     });
 
-    it("defaults to https://api.kovamind.ai", async () => {
+    it("defaults to https://api.kovamind.io", async () => {
       const defaultKova = new KovaMind({ apiKey: API_KEY });
       vi.stubGlobal("fetch", mockFetch([{ status: 200, body: { status: "ok" } }]));
       await defaultKova.health();
-      expect(fetchCalls[0].url).toBe("https://api.kovamind.ai/health");
+      expect(fetchCalls[0].url).toBe("https://api.kovamind.io/health");
     });
 
     it("sends Bearer token in Authorization header", async () => {

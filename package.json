@@ -20,13 +20,13 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": ["ai", "memory", "agents", "llm", "kovamind"],
-  "author": "Kova Mind <hello@kovamind.ai>",
+  "author": "Kova Mind <hello@kovamind.io>",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/KovaMind/js-sdk.git"
   },
-  "homepage": "https://kovamind.ai",
+  "homepage": "https://kovamind.io",
   "engines": {
     "node": ">=18"
   },

@@ -28,7 +28,7 @@ import type {
   VaultRecoverParams,
 } from "./types";
 
-const DEFAULT_BASE_URL = "https://api.kovamind.ai";
+const DEFAULT_BASE_URL = "https://api.kovamind.io";
 const DEFAULT_TIMEOUT = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 1000;

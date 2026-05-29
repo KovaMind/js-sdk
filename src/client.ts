@@ -117,7 +117,7 @@ export class KovaMind {
 
   async context(params: { conversationId: string }): Promise<EmotionalContext> {
     const data = await this.get(
-      `/memory/context?conversation_id=${encodeURIComponent(params.conversationId)}`
+      `/api/memory/context?conversation_id=${encodeURIComponent(params.conversationId)}`
     );
     return {
       conversationId:

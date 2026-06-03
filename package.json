@@ -39,7 +39,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.12"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

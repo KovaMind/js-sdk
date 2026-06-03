@@ -5,13 +5,13 @@
 Node.js/TypeScript SDK for the **Kova Mind** memory API — give your AI agents persistent, learning memory.
 
 ```bash
-npm install kovamind
+npm install @kovamind/js-sdk
 ```
 
 ## Quickstart
 
 ```typescript
-import { KovaMind } from "kovamind";
+import { KovaMind } from "@kovamind/js-sdk";
 
 const kova = new KovaMind({ apiKey: "km_live_xxx" });
 
@@ -63,7 +63,7 @@ console.log(novelty.score, novelty.route); // 0.82, "contradict"
 ## Error handling
 
 ```typescript
-import { KovaMind, AuthError, RateLimitError, NotFoundError } from "kovamind";
+import { KovaMind, AuthError, RateLimitError, NotFoundError } from "@kovamind/js-sdk";
 
 try {
   const result = await kova.recall({ context: "preferences", userId: "alex" });
@@ -77,6 +77,43 @@ try {
   }
 }
 ```
+
+## Bound API keys (403 — identity mismatch)
+
+An API key can be **bound server-side to a single `user_id`** (a fixed agent
+identity). This is a Kova Mind server feature and applies regardless of which
+SDK you use.
+
+- **Bound key:** if the `userId` you pass in a request differs from the identity
+  the key is bound to, the API rejects the request with:
+
+  ```
+  HTTP 403  {"detail": "API key is bound to a different agent identity"}
+  ```
+
+- **Unbound key:** the client-supplied `userId` is passed through unchanged
+  (no binding check).
+
+This is a new documented failure mode integrators must handle. The SDK surfaces
+it as a `KovaMindError` with `statusCode === 403` and the server's `detail`
+string as the message:
+
+```typescript
+import { KovaMind, KovaMindError } from "@kovamind/js-sdk";
+
+try {
+  await kova.recall({ context: "preferences", userId: "alex" });
+} catch (err) {
+  if (err instanceof KovaMindError && err.statusCode === 403) {
+    // The key is bound to a different user_id than the one you sent.
+    // Use the user_id this key is bound to, or use an unbound key.
+    console.error(err.message); // "API key is bound to a different agent identity"
+  }
+}
+```
+
+> Tip: give each agent its own bound key so a key can only ever read and write
+> that agent's memories.
 
 ## License
 

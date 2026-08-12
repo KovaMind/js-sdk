@@ -1,4 +1,4 @@
-# kovamind
+# @kovamind/js-sdk
 
 [![Tests](https://github.com/KovaMind/js-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/KovaMind/js-sdk/actions/workflows/tests.yml)
 
@@ -65,6 +65,10 @@ console.log(
 
 ### `extract(params)` — Extract memory patterns
 ### `recall(params)` — Retrieve relevant memories
+
+`minConfidence` is optional. When you omit it the SDK does not send the field,
+so the server's default minimum confidence (`0.1`) applies. Pass a value only
+when you want a stricter filter.
 ### `surprise(params)` — Score content novelty
 ### `reinforce(params)` — Reinforce a pattern (`"confirmed"` | `"contradicted"` | `"used"`); returns the pattern's previous/new confidence
 ### `health()` — Check API health

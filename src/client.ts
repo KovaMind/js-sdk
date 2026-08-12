@@ -67,13 +67,21 @@ export class KovaMind {
     };
   }
 
+  /**
+   * Retrieve relevant memories.
+   *
+   * `minConfidence` is only sent when the caller provides it; when omitted,
+   * the server applies its own default (0.1).
+   */
   async recall(params: RecallParams): Promise<RecallResult> {
     const body: Record<string, unknown> = {
       context: params.context,
       user_id: params.userId,
       max_patterns: params.maxPatterns ?? 10,
-      min_confidence: params.minConfidence ?? 0.3,
     };
+    if (params.minConfidence !== undefined) {
+      body.min_confidence = params.minConfidence;
+    }
 
     const data = await this.post("/api/memory/retrieve", body);
     return {
@@ -293,7 +301,11 @@ export class KovaMind {
     response: Response
   ): Promise<Record<string, any>> {
     if (response.status === 401) {
-      throw new AuthError();
+      // Propagate the backend's detail message ("Invalid or revoked API key"
+      // vs "Authorization header required"); AuthError's built-in message is
+      // only a fallback for bodies without a detail string.
+      const data = await safeJson(response);
+      throw new AuthError((data.detail as string) ?? undefined);
     }
 
     if (response.status === 404) {

@@ -32,6 +32,10 @@ export interface RecallParams {
   context: string;
   userId: string;
   maxPatterns?: number;
+  /**
+   * Minimum confidence filter (0-1). Omitted from the request when not set,
+   * so the server default (0.1) applies.
+   */
   minConfidence?: number;
 }
 

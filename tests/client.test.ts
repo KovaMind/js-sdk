@@ -245,12 +245,12 @@ describe("KovaMind", () => {
       expect(body.min_confidence).toBe(0.8);
     });
 
-    it("uses defaults maxPatterns=10, minConfidence=0.3", async () => {
+    it("defaults maxPatterns=10 and omits min_confidence (server default 0.1 applies)", async () => {
       vi.stubGlobal("fetch", mockFetch([{ status: 200, body: { patterns: [] } }]));
       await kova.recall({ context: "test", userId: "alex" });
       const body = JSON.parse(fetchCalls[0].init?.body as string);
       expect(body.max_patterns).toBe(10);
-      expect(body.min_confidence).toBe(0.3);
+      expect("min_confidence" in body).toBe(false);
     });
 
     it("omits relevance when the backend sends null", async () => {
@@ -439,6 +439,32 @@ describe("KovaMind", () => {
       const e = new RateLimitError("limited", 60);
       expect(e.statusCode).toBe(429);
       expect(e.retryAfter).toBe(60);
+    });
+
+    it("AuthError propagates the backend detail message on 401", async () => {
+      vi.stubGlobal(
+        "fetch",
+        mockFetch([{ status: 401, body: { detail: "Invalid or revoked API key" } }])
+      );
+      try {
+        await kova.recall({ context: "test", userId: "alex" });
+        expect.unreachable("recall should have thrown");
+      } catch (err: any) {
+        expect(err).toBeInstanceOf(AuthError);
+        expect(err.message).toBe("Invalid or revoked API key");
+        expect(err.statusCode).toBe(401);
+      }
+    });
+
+    it("AuthError falls back to default message when 401 has no detail", async () => {
+      vi.stubGlobal("fetch", mockFetch([{ status: 401 }]));
+      try {
+        await kova.recall({ context: "test", userId: "alex" });
+        expect.unreachable("recall should have thrown");
+      } catch (err: any) {
+        expect(err).toBeInstanceOf(AuthError);
+        expect(err.message).toBe("Invalid or missing API key");
+      }
     });
 
     it("NotFoundError includes detail message from API", async () => {

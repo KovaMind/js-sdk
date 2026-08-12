@@ -42,6 +42,15 @@ const novelty = await kova.surprise({
   userId: "alex",
 });
 console.log(novelty.score, novelty.route); // 0.82, "contradict"
+
+// Reinforce a pattern — type is "confirmed", "contradicted", or "used"
+const reinforced = await kova.reinforce({
+  patternId: memories.patterns[0].id,
+  reinforcementType: "confirmed",
+});
+console.log(
+  `confidence ${reinforced.previousConfidence} -> ${reinforced.newConfidence}`
+); // e.g. "confidence 0.75 -> 0.85"
 ```
 
 ## API
@@ -57,7 +66,7 @@ console.log(novelty.score, novelty.route); // 0.82, "contradict"
 ### `extract(params)` — Extract memory patterns
 ### `recall(params)` — Retrieve relevant memories
 ### `surprise(params)` — Score content novelty
-### `reinforce(params)` — Confirm/deny a pattern
+### `reinforce(params)` — Reinforce a pattern (`"confirmed"` | `"contradicted"` | `"used"`); returns the pattern's previous/new confidence
 ### `health()` — Check API health
 
 ## Error handling

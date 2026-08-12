@@ -50,16 +50,32 @@ describe("KovaMind", () => {
   // ── extract ─────────────────────────────────────────────────────
 
   describe("extract", () => {
-    it("returns patterns on success", async () => {
+    it("returns patterns on success (real ExtractResponse shape)", async () => {
       vi.stubGlobal(
         "fetch",
         mockFetch([
           {
             status: 200,
             body: {
+              patterns_extracted: 1,
               patterns: [
-                { id: "1", pattern: "Prefers dark mode", category: "preference", confidence: 0.95, user_id: "alex", tenant_id: "t1" },
+                {
+                  pattern_id: "pattern_789",
+                  pattern_type: "preference",
+                  user_id: "alex",
+                  content: "Prefers dark mode",
+                  confidence: 0.95,
+                  source: "conversation",
+                  created_at: "2026-01-18T10:30:00Z",
+                  last_reinforced: null,
+                  reinforcement_count: 0,
+                  relevance: null,
+                },
               ],
+              decisions_found: 0,
+              corrections_found: 0,
+              processing_time_ms: 125.5,
+              consolidation_pending: false,
             },
           },
         ])
@@ -69,8 +85,43 @@ describe("KovaMind", () => {
         userId: "alex",
       });
       expect(result.patterns).toHaveLength(1);
+      expect(result.patterns[0].id).toBe("pattern_789");
       expect(result.patterns[0].pattern).toBe("Prefers dark mode");
+      expect(result.patterns[0].category).toBe("preference");
       expect(result.patterns[0].confidence).toBe(0.95);
+      expect(result.patterns[0].user_id).toBe("alex");
+      // null relevance from the backend is omitted, not coerced to 0
+      expect(result.patterns[0].relevance).toBeUndefined();
+      expect(result.raw.patterns_extracted).toBe(1);
+    });
+
+    it("carries unmapped backend fields in metadata", async () => {
+      vi.stubGlobal(
+        "fetch",
+        mockFetch([
+          {
+            status: 200,
+            body: {
+              patterns_extracted: 1,
+              patterns: [
+                {
+                  pattern_id: "p1",
+                  pattern_type: "preference",
+                  content: "Likes Python",
+                  confidence: 0.8,
+                  source: "conversation",
+                  created_at: "2026-01-18T10:30:00Z",
+                  emotion_primary: "joy",
+                },
+              ],
+            },
+          },
+        ])
+      );
+      const result = await kova.extract({ conversation: [], userId: "alex" });
+      expect(result.patterns[0].metadata.source).toBe("conversation");
+      expect(result.patterns[0].metadata.created_at).toBe("2026-01-18T10:30:00Z");
+      expect(result.patterns[0].metadata.emotion_primary).toBe("joy");
     });
 
     it("sends session_id when provided", async () => {
@@ -138,20 +189,12 @@ describe("KovaMind", () => {
       await expect(kova.extract({ conversation: [], userId: "alex" })).rejects.toThrow(ServerError);
     });
 
-    it("handles results key fallback", async () => {
-      vi.stubGlobal(
-        "fetch",
-        mockFetch([{ status: 200, body: { results: [{ id: "1", pattern: "via results" }] } }])
-      );
-      const result = await kova.extract({ conversation: [], userId: "alex" });
-      expect(result.patterns[0].pattern).toBe("via results");
-    });
   });
 
   // ── recall ──────────────────────────────────────────────────────
 
   describe("recall", () => {
-    it("returns patterns on success", async () => {
+    it("returns patterns on success (real RetrieveResponse shape)", async () => {
       vi.stubGlobal(
         "fetch",
         mockFetch([
@@ -159,15 +202,33 @@ describe("KovaMind", () => {
             status: 200,
             body: {
               patterns: [
-                { id: "1", pattern: "Prefers dark mode", category: "preference", confidence: 0.9, user_id: "alex", tenant_id: "t1" },
+                {
+                  pattern_id: "pattern_789",
+                  pattern_type: "preference",
+                  user_id: "alex",
+                  content: "Prefers dark mode",
+                  confidence: 0.9,
+                  source: "conversation",
+                  created_at: "2026-01-18T10:30:00Z",
+                  relevance: 0.87,
+                },
               ],
+              decisions: [],
+              milestones: [],
+              retrieval_time_ms: 12.4,
+              total_matches: 1,
             },
           },
         ])
       );
       const result = await kova.recall({ context: "what does alex like?", userId: "alex" });
       expect(result.patterns).toHaveLength(1);
+      expect(result.patterns[0].id).toBe("pattern_789");
+      expect(result.patterns[0].pattern).toBe("Prefers dark mode");
+      expect(result.patterns[0].category).toBe("preference");
+      expect(result.patterns[0].relevance).toBe(0.87);
       expect(result.query).toBe("what does alex like?");
+      expect(result.raw.total_matches).toBe(1);
     });
 
     it("returns empty patterns when none found", async () => {
@@ -192,38 +253,83 @@ describe("KovaMind", () => {
       expect(body.min_confidence).toBe(0.3);
     });
 
-    it("handles memories key fallback", async () => {
+    it("omits relevance when the backend sends null", async () => {
       vi.stubGlobal(
         "fetch",
-        mockFetch([{ status: 200, body: { memories: [{ id: "1", pattern: "via memories" }] } }])
+        mockFetch([
+          {
+            status: 200,
+            body: {
+              patterns: [
+                {
+                  pattern_id: "p2",
+                  pattern_type: "fact",
+                  content: "Uses Python",
+                  confidence: 0.7,
+                  source: "conversation",
+                  created_at: "2026-01-18T10:30:00Z",
+                  relevance: null,
+                },
+              ],
+              retrieval_time_ms: 3.1,
+              total_matches: 1,
+            },
+          },
+        ])
       );
       const result = await kova.recall({ context: "test", userId: "alex" });
-      expect(result.patterns[0].pattern).toBe("via memories");
+      expect(result.patterns[0].relevance).toBeUndefined();
+      expect(result.patterns[0].confidence).toBe(0.7);
     });
   });
 
   // ── reinforce ───────────────────────────────────────────────────
 
   describe("reinforce", () => {
-    it("returns success", async () => {
-      vi.stubGlobal(
-        "fetch",
-        mockFetch([{ status: 200, body: { pattern_id: "17", type: "confirmed", success: true } }])
-      );
+    const REINFORCE_BODY = {
+      pattern_id: "17",
+      previous_confidence: 0.75,
+      new_confidence: 0.85,
+      reinforcement_type: "confirmed",
+      timestamp: "2026-01-18T11:00:00Z",
+    };
+
+    it("parses the real ReinforceResponse", async () => {
+      vi.stubGlobal("fetch", mockFetch([{ status: 200, body: REINFORCE_BODY }]));
       const result = await kova.reinforce({ patternId: "17", reinforcementType: "confirmed" });
       expect(result.patternId).toBe("17");
-      expect(result.success).toBe(true);
+      expect(result.previousConfidence).toBe(0.75);
+      expect(result.newConfidence).toBe(0.85);
+      expect(result.reinforcementType).toBe("confirmed");
+      expect(result.timestamp).toBe("2026-01-18T11:00:00Z");
+      expect(result.raw).toEqual(REINFORCE_BODY);
+    });
+
+    it("accepts all real reinforcement types", async () => {
+      for (const rt of ["confirmed", "contradicted", "used"] as const) {
+        fetchCalls = [];
+        vi.stubGlobal(
+          "fetch",
+          mockFetch([
+            { status: 200, body: { ...REINFORCE_BODY, reinforcement_type: rt } },
+          ])
+        );
+        const result = await kova.reinforce({ patternId: "17", reinforcementType: rt });
+        expect(result.reinforcementType).toBe(rt);
+        const body = JSON.parse(fetchCalls[0].init?.body as string);
+        expect(body.reinforcement_type).toBe(rt);
+      }
     });
 
     it("sends context when provided", async () => {
-      vi.stubGlobal("fetch", mockFetch([{ status: 200, body: { success: true } }]));
+      vi.stubGlobal("fetch", mockFetch([{ status: 200, body: REINFORCE_BODY }]));
       await kova.reinforce({ patternId: "17", reinforcementType: "confirmed", context: "User said so" });
       const body = JSON.parse(fetchCalls[0].init?.body as string);
       expect(body.context).toBe("User said so");
     });
 
     it("does not send context when undefined", async () => {
-      vi.stubGlobal("fetch", mockFetch([{ status: 200, body: { success: true } }]));
+      vi.stubGlobal("fetch", mockFetch([{ status: 200, body: REINFORCE_BODY }]));
       await kova.reinforce({ patternId: "17", reinforcementType: "confirmed" });
       const body = JSON.parse(fetchCalls[0].init?.body as string);
       expect(body.context).toBeUndefined();

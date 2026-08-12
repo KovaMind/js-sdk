@@ -15,6 +15,7 @@ import type {
   RecallResult,
   ReinforceParams,
   ReinforcementResult,
+  ReinforcementType,
   SurpriseParams,
   SurpriseResult,
   VaultSetupResult,
@@ -96,8 +97,12 @@ export class KovaMind {
     const data = await this.post("/api/memory/reinforce", body);
     return {
       patternId: (data.pattern_id as string) ?? params.patternId,
-      reinforcementType: (data.type as string) ?? params.reinforcementType,
-      success: (data.success as boolean) ?? true,
+      previousConfidence: Number(data.previous_confidence ?? 0),
+      newConfidence: Number(data.new_confidence ?? 0),
+      reinforcementType:
+        (data.reinforcement_type as ReinforcementType) ??
+        params.reinforcementType,
+      timestamp: (data.timestamp as string) ?? "",
       raw: data,
     };
   }
@@ -313,17 +318,32 @@ export class KovaMind {
 function parsePatterns(raw: unknown[]): Pattern[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((item: any) => {
-    const { id, pattern, category, confidence, user_id, tenant_id, ...rest } =
-      item;
-    return {
-      id: String(id ?? ""),
-      pattern: pattern ?? "",
-      category: category ?? "",
+    // Real backend fields (PatternResponse): pattern_id, content,
+    // pattern_type, confidence, relevance, user_id. Everything else
+    // (source, created_at, emotion_*, ...) is carried in metadata.
+    const {
+      pattern_id,
+      content,
+      pattern_type,
+      confidence,
+      relevance,
+      user_id,
+      tenant_id,
+      ...rest
+    } = item;
+    const parsed: Pattern = {
+      id: String(pattern_id ?? ""),
+      pattern: content ?? "",
+      category: pattern_type ?? "",
       confidence: Number(confidence ?? 1),
       user_id: user_id ?? "",
       tenant_id: tenant_id ?? "",
       metadata: rest,
     };
+    if (relevance !== undefined && relevance !== null) {
+      parsed.relevance = Number(relevance);
+    }
+    return parsed;
   });
 }
 

@@ -3,17 +3,15 @@ export interface Message {
   content: string;
 }
 
-export type ReinforcementType =
-  | "confirmed"
-  | "denied"
-  | "strengthened"
-  | "weakened";
+export type ReinforcementType = "confirmed" | "contradicted" | "used";
 
 export interface Pattern {
   id: string;
   pattern: string;
   category: string;
   confidence: number;
+  /** Query-relevance score (0-1). Only present when the backend ranked results. */
+  relevance?: number;
   user_id: string;
   tenant_id: string;
   metadata: Record<string, unknown>;
@@ -51,8 +49,11 @@ export interface ReinforceParams {
 
 export interface ReinforcementResult {
   patternId: string;
-  reinforcementType: string;
-  success: boolean;
+  previousConfidence: number;
+  newConfidence: number;
+  reinforcementType: ReinforcementType;
+  /** ISO-8601 timestamp of when the reinforcement was applied. */
+  timestamp: string;
   raw: Record<string, unknown>;
 }
 
